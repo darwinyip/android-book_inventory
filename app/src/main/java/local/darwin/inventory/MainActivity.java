@@ -1,19 +1,31 @@
 package local.darwin.inventory;
 
 import android.app.Activity;
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
+import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.Toolbar;
 
 import local.darwin.inventory.data.BookContract.BookEntry;
 import local.darwin.inventory.data.BookDbHelper;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
 
+    private static final int BOOK_LOADER = 0;
+    private BookCursorAdapter adapter;
     private BookDbHelper bookDbHelper;
 
     @Override
@@ -22,10 +34,45 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, BookDetails.class);
+                startActivity(intent);
+            }
+        });
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setActionBar(toolbar);
+
+        ListView bookListView = findViewById(R.id.listview);
+        View emptyView = findViewById(R.id.empty_view);
+        adapter = new BookCursorAdapter(this, null);
+
+        bookListView.setEmptyView(emptyView);
+        bookListView.setAdapter(adapter);
+
         bookDbHelper = new BookDbHelper(this);
 
-        insertBook();
-        queryData();
+//        insertBook();
+
+        getLoaderManager().initLoader(BOOK_LOADER, null, this);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+//        switch (item.getItemId()) {
+//            case R.id.action_delete_all:
+//                deleteAllBooks();
+//        }
+        return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
     }
 
     public void insertBook() {
@@ -40,6 +87,11 @@ public class MainActivity extends Activity {
 
 
         db.insert(BookEntry.TABLE_NAME, null, values);
+    }
+
+    public void deleteAllBooks() {
+        int rowsDeleted = getContentResolver().delete(BookEntry.CONTENT_URI, null, null);
+        Log.v(LOG_TAG, rowsDeleted + " rows deleted from book database");
     }
 
     public void queryData() {
@@ -72,5 +124,32 @@ public class MainActivity extends Activity {
         }
 
         cursor.close();
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String[] projection = {
+                BookEntry._ID,
+                BookEntry.COLUMN_BOOK_NAME,
+                BookEntry.COLUMN_BOOK_PRICE,
+                BookEntry.COLUMN_BOOK_QUANTITY
+        };
+
+        return new CursorLoader(this,
+                BookEntry.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
     }
 }
