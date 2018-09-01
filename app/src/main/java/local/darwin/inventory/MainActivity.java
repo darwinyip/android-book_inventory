@@ -2,18 +2,21 @@ package local.darwin.inventory;
 
 import android.app.Activity;
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toolbar;
 
@@ -53,9 +56,19 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
         bookListView.setEmptyView(emptyView);
         bookListView.setAdapter(adapter);
 
+        bookListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Uri currentBookUri = ContentUris.withAppendedId(BookEntry.CONTENT_URI, id);
+                Intent intent = new Intent(MainActivity.this, BookDetails.class);
+                intent.setData(currentBookUri);
+                startActivity(intent);
+            }
+        });
+
         bookDbHelper = new BookDbHelper(this);
 
-//        insertBook();
+        insertBook();
 
         getLoaderManager().initLoader(BOOK_LOADER, null, this);
     }

@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Inventory</string>
     <string name="empty_view_text">There are no books!</string>
+    <string name="sale">Sale</string>
+    <string name="add_book">Add a Book</string>
+    <string name="edit_book">Edit a book</string>
 </resources>
